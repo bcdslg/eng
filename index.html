@@ -367,9 +367,16 @@
       justify-items: center;
       gap: 18px;
       min-height: 0;
-      padding: 26px 28px 54px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 22px 28px 30px;
       text-align: center;
       will-change: transform, opacity;
+      scrollbar-width: none;
+    }
+
+    .study-card::-webkit-scrollbar {
+      display: none;
     }
 
     .study-card.slide-next {
@@ -690,13 +697,36 @@
       }
 
       .study-card {
-        gap: 14px;
-        padding: 22px 18px 74px;
+        align-content: start;
+        gap: 10px;
+        padding: 8px 18px 14px;
       }
 
       .study-art {
-        width: min(178px, 44vw);
+        width: min(138px, 36vw);
         border-radius: 24px;
+      }
+
+      .study-art-emoji {
+        font-size: clamp(3.7rem, 17vw, 5rem);
+      }
+
+      .study-art-label {
+        font-size: 0.78rem;
+        min-height: 23px;
+        padding: 4px 7px;
+      }
+
+      .study-chinese {
+        font-size: clamp(1.9rem, 9vw, 3.2rem);
+      }
+
+      .study-english {
+        font-size: clamp(1.45rem, 7.5vw, 2.65rem);
+      }
+
+      .study-pronunciation {
+        font-size: clamp(0.95rem, 3.5vw, 1.25rem);
       }
 
       .study-speak {
@@ -1262,7 +1292,7 @@
       }
 
       const card = event.target.closest(".card");
-      if (!card || !mobileQuery.matches) return;
+      if (!card) return;
       openStudyCard(Number(card.dataset.index));
     });
 
