@@ -380,9 +380,19 @@
       animation: slidePrev 220ms ease-out;
     }
 
+    .study-art {
+      display: block;
+      width: min(210px, 48vw);
+      aspect-ratio: 1;
+      border-radius: 28px;
+      filter: drop-shadow(0 16px 22px rgba(36, 48, 66, 0.16));
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
     .study-chinese {
       margin: 0;
-      font-size: clamp(2.8rem, 14vw, 5.6rem);
+      font-size: clamp(2.35rem, 11vw, 4.6rem);
       line-height: 1.05;
       font-weight: 900;
       overflow-wrap: anywhere;
@@ -622,8 +632,13 @@
       }
 
       .study-card {
-        gap: 16px;
+        gap: 14px;
         padding: 22px 18px 74px;
+      }
+
+      .study-art {
+        width: min(178px, 44vw);
+        border-radius: 24px;
       }
 
       .study-speak {
@@ -665,6 +680,7 @@
         <button class="study-close" id="studyClose" type="button" aria-label="关闭">×</button>
       </div>
       <div class="study-card">
+        <img class="study-art" id="studyArt" alt="" aria-hidden="true">
         <p class="study-chinese" id="studyChinese"></p>
         <p class="study-english" id="studyEnglish"></p>
         <p class="study-pronunciation" id="studyPronunciation"></p>
@@ -924,6 +940,7 @@
     const studyModal = document.getElementById("studyModal");
     const studyPanel = document.getElementById("studyPanel");
     const studyCard = document.querySelector(".study-card");
+    const studyArt = document.getElementById("studyArt");
     const studyCategory = document.getElementById("studyCategory");
     const studyChinese = document.getElementById("studyChinese");
     const studyEnglish = document.getElementById("studyEnglish");
@@ -940,6 +957,53 @@
     let touchStartY = 0;
     let englishVoice = null;
 
+    const categoryEmoji = {
+      "水果蔬菜": "🥕",
+      "玩具": "🧸",
+      "家具": "🛋️",
+      "电器": "💡",
+      "日常用品": "🥣",
+      "衣物": "👕",
+      "交通工具": "🚗"
+    };
+
+    const wordEmoji = {
+      apple: "🍎", banana: "🍌", orange: "🍊", strawberry: "🍓", grape: "🍇", watermelon: "🍉",
+      pineapple: "🍍", pear: "🍐", peach: "🍑", cherry: "🍒", lemon: "🍋", carrot: "🥕",
+      broccoli: "🥦", tomato: "🍅", cucumber: "🥒", potato: "🥔", onion: "🧅", lettuce: "🥬",
+      corn: "🌽", mushroom: "🍄", pumpkin: "🎃", blueberry: "🫐", mango: "🥭", kiwi: "🥝",
+      peas: "🫛", spinach: "🥬", cabbage: "🥬", garlic: "🧄", pepper: "🌶️",
+      "teddy bear": "🧸", blocks: "🧱", puzzle: "🧩", doll: "🎎", "toy car": "🚗", ball: "⚽",
+      "jump rope": "➰", kite: "🪁", beanbag: "🫘", puppet: "🎭", "train set": "🚂", lego: "🧱",
+      "play-doh": "🎨", scooter: "🛴", trampoline: "🤸", "spinning top": "🌀", "yo-yo": "🪀",
+      "remote control car": "🏎️", "bubble wand": "🫧", crayons: "🖍️", "drawing board": "🎨",
+      stickers: "⭐", marbles: "🔵", "toy kitchen": "🍳",
+      table: "🪑", chair: "🪑", sofa: "🛋️", bed: "🛏️", wardrobe: "🚪", dresser: "🗄️",
+      bookshelf: "📚", desk: "🧑‍💻", vanity: "🪞", "dining table": "🍽️", stool: "🪑", crib: "🛏️",
+      chandelier: "💡", rug: "▫️", curtain: "🪟", pillow: "🛏️", blanket: "🛌", nightstand: "🗄️",
+      "coffee table": "☕", "tv stand": "📺", "shoe cabinet": "👟", armchair: "💺", door: "🚪", window: "🪟",
+      television: "📺", tv: "📺", refrigerator: "🧊", microwave: "♨️", oven: "🔥",
+      "washing machine": "🧺", dryer: "💨", "air conditioner": "❄️", fan: "🌀", vacuum: "🧹",
+      "rice cooker": "🍚", "electric kettle": "🫖", computer: "💻", cellphone: "📱", tablet: "📱",
+      "desk lamp": "💡", "light bulb": "💡", "power outlet": "🔌", charger: "🔌", "hair dryer": "💨",
+      printer: "🖨️", router: "📶", speaker: "🔊", camera: "📷", "game console": "🎮",
+      "electric toothbrush": "🪥", humidifier: "💧", "air purifier": "🍃",
+      cup: "☕", plate: "🍽️", bowl: "🥣", spoon: "🥄", fork: "🍴", knife: "🔪", chopsticks: "🥢",
+      kettle: "🫖", pot: "🍲", pan: "🍳", toothbrush: "🪥", toothpaste: "🪥", towel: "🧺",
+      soap: "🧼", shampoo: "🧴", "trash can": "🗑️", broom: "🧹", mop: "🧽", mirror: "🪞",
+      "alarm clock": "⏰", tissue: "🧻", umbrella: "☂️", key: "🔑", backpack: "🎒",
+      "water bottle": "🍼", "soap dish": "🧼", comb: "💇", hanger: "🧥", "laundry basket": "🧺",
+      "remote control": "🎛️", scissors: "✂️", tape: "📦", "crayon box": "🖍️",
+      "t-shirt": "👕", shirt: "👔", pants: "👖", shorts: "🩳", skirt: "👗", dress: "👗",
+      socks: "🧦", shoes: "👟", jacket: "🧥", sweater: "🧶", hat: "🧢", scarf: "🧣",
+      gloves: "🧤", pajamas: "🛌", raincoat: "🧥", boots: "🥾", jeans: "👖", sneakers: "👟",
+      slippers: "🩴", underwear: "🩲", vest: "🦺", belt: "🔗", swimsuit: "🩱", "school uniform": "🎒",
+      car: "🚗", bus: "🚌", train: "🚆", airplane: "✈️", boat: "⛵", bicycle: "🚲",
+      motorcycle: "🏍️", truck: "🚚", ambulance: "🚑", "fire truck": "🚒", taxi: "🚕",
+      "school bus": "🚌", subway: "🚇", helicopter: "🚁", "police car": "🚓", van: "🚐",
+      ship: "🚢", skateboard: "🛹", stroller: "🛒"
+    };
+
     function normalize(text) {
       return String(text).trim().toLowerCase();
     }
@@ -953,8 +1017,49 @@
         .replace(/'/g, "&#039;");
     }
 
+    function escapeSvg(text) {
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
     function getSpeakText(english) {
       return english.replace(/\s*\/.*$/, "").trim();
+    }
+
+    function getWordEmoji(word) {
+      const primaryEnglish = getSpeakText(word.english).toLowerCase();
+      return wordEmoji[primaryEnglish] || categoryEmoji[word.category] || "⭐";
+    }
+
+    function createCartoonImage(word) {
+      const emoji = escapeSvg(getWordEmoji(word));
+      const label = escapeSvg(getSpeakText(word.english));
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220">
+          <defs>
+            <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="52%" stop-color="#fff4bd"/>
+              <stop offset="100%" stop-color="#cdeeff"/>
+            </linearGradient>
+            <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#31425f" flood-opacity="0.18"/>
+            </filter>
+          </defs>
+          <rect width="220" height="220" rx="46" fill="url(#bg)"/>
+          <circle cx="42" cy="48" r="18" fill="#ffb3cf" opacity="0.78"/>
+          <circle cx="180" cy="54" r="24" fill="#8fdc8d" opacity="0.68"/>
+          <circle cx="178" cy="166" r="18" fill="#78b7ff" opacity="0.62"/>
+          <path d="M39 158c24 23 60 30 95 13 23-11 41-5 52 11" fill="none" stroke="#243042" stroke-width="8" stroke-linecap="round" opacity="0.1"/>
+          <text x="110" y="125" text-anchor="middle" dominant-baseline="middle" font-size="86" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif" filter="url(#soft)">${emoji}</text>
+          <rect x="42" y="166" width="136" height="31" rx="15.5" fill="#ffffff" opacity="0.82"/>
+          <text x="110" y="187" text-anchor="middle" font-size="15" font-weight="800" fill="#243042" font-family="Arial, sans-serif">${label}</text>
+        </svg>
+      `;
+
+      return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
     }
 
     function createFilterButtons() {
@@ -1061,6 +1166,8 @@
 
       studyCard.classList.remove("slide-next", "slide-prev");
       studyPanel.style.background = word.color;
+      studyArt.src = createCartoonImage(word);
+      studyArt.alt = `${word.chinese} 的卡通图`;
       studyCategory.textContent = `${word.icon} ${word.category}`;
       studyChinese.textContent = word.chinese;
       studyEnglish.textContent = word.english;
