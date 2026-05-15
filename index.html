@@ -1199,7 +1199,29 @@
     function loadVoices() {
       if (!("speechSynthesis" in window)) return;
       const voices = window.speechSynthesis.getVoices();
-      englishVoice = voices.find(voice => voice.lang === "en-US")
+      const naturalEnglishNames = [
+        "samantha",
+        "karen",
+        "daniel",
+        "moira",
+        "tessa",
+        "fiona",
+        "alex",
+        "google us english",
+        "google uk english female",
+        "google uk english male",
+        "microsoft aria",
+        "microsoft jenny",
+        "microsoft guy"
+      ];
+
+      englishVoice = voices.find(voice => {
+        const name = voice.name.toLowerCase();
+        const lang = (voice.lang || "").toLowerCase();
+        return lang.startsWith("en") && naturalEnglishNames.some(preferred => name.includes(preferred));
+      })
+        || voices.find(voice => voice.lang === "en-US" && voice.localService)
+        || voices.find(voice => voice.lang === "en-US")
         || voices.find(voice => voice.lang && voice.lang.toLowerCase().startsWith("en"))
         || null;
       chineseVoice = voices.find(voice => voice.lang === "zh-CN")
