@@ -304,6 +304,144 @@
       backdrop-filter: blur(10px);
     }
 
+    .study-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(24, 32, 46, 0.55);
+      backdrop-filter: blur(14px);
+    }
+
+    .study-modal.open {
+      display: grid;
+    }
+
+    .study-panel {
+      position: relative;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      width: min(520px, 100%);
+      min-height: min(720px, calc(100vh - 36px));
+      border-radius: 28px;
+      overflow: hidden;
+      background: linear-gradient(135deg, #fff7c8, #ddf7ff);
+      box-shadow: 0 26px 60px rgba(10, 20, 35, 0.28);
+      touch-action: pan-y;
+    }
+
+    .study-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 16px 0;
+    }
+
+    .study-category,
+    .study-count {
+      font-weight: 900;
+      color: rgba(36, 48, 66, 0.76);
+    }
+
+    .study-close {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.8);
+      color: var(--ink);
+      font-size: 1.35rem;
+      font-weight: 900;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .study-card {
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      gap: 18px;
+      padding: 26px 28px;
+      text-align: center;
+    }
+
+    .study-chinese {
+      margin: 0;
+      font-size: clamp(2.8rem, 14vw, 5.6rem);
+      line-height: 1.05;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .study-english {
+      margin: 0;
+      font-size: clamp(2.1rem, 10vw, 4.4rem);
+      line-height: 1.08;
+      font-weight: 900;
+      color: #142135;
+      overflow-wrap: anywhere;
+    }
+
+    .study-pronunciation {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(1.05rem, 4vw, 1.55rem);
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .study-speak {
+      display: inline-grid;
+      place-items: center;
+      width: 78px;
+      height: 78px;
+      border: 0;
+      border-radius: 50%;
+      margin-top: 8px;
+      background: white;
+      box-shadow: var(--shadow-soft);
+      font-size: 2rem;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .study-nav {
+      display: grid;
+      grid-template-columns: 56px 1fr 56px;
+      align-items: center;
+      gap: 12px;
+      padding: 0 18px max(18px, env(safe-area-inset-bottom));
+    }
+
+    .study-arrow {
+      display: grid;
+      place-items: center;
+      width: 56px;
+      height: 56px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--ink);
+      box-shadow: var(--shadow-soft);
+      font-size: 2rem;
+      font-weight: 900;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .study-hint {
+      margin: 0;
+      color: rgba(36, 48, 66, 0.68);
+      text-align: center;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
     @media (hover: none) {
       .card:hover,
       .filter-btn:hover {
@@ -438,6 +576,15 @@
         padding: 11px 18px;
         font-size: 0.95rem;
       }
+
+      .study-modal {
+        padding: 10px;
+      }
+
+      .study-panel {
+        min-height: calc(100vh - 20px);
+        border-radius: 24px;
+      }
     }
   </style>
 </head>
@@ -460,6 +607,26 @@
     <main id="wordList"></main>
     <div class="empty" id="emptyState">没有找到匹配的单词，换个关键词试试看。</div>
     <div class="footer" id="countText">共 0 个单词</div>
+  </div>
+
+  <div class="study-modal" id="studyModal" aria-hidden="true">
+    <section class="study-panel" id="studyPanel" role="dialog" aria-modal="true" aria-label="单词学习卡片">
+      <div class="study-topbar">
+        <span class="study-category" id="studyCategory"></span>
+        <button class="study-close" id="studyClose" type="button" aria-label="关闭">×</button>
+      </div>
+      <div class="study-card">
+        <p class="study-chinese" id="studyChinese"></p>
+        <p class="study-english" id="studyEnglish"></p>
+        <p class="study-pronunciation" id="studyPronunciation"></p>
+        <button class="study-speak" id="studySpeak" type="button" aria-label="朗读当前单词">🔊</button>
+      </div>
+      <div class="study-nav">
+        <button class="study-arrow" id="studyPrev" type="button" aria-label="上一个单词">‹</button>
+        <p class="study-hint"><span id="studyCount"></span>　左右滑动切换</p>
+        <button class="study-arrow" id="studyNext" type="button" aria-label="下一个单词">›</button>
+      </div>
+    </section>
   </div>
 
   <script>
@@ -705,6 +872,23 @@
     const countEl = document.getElementById("countText");
     const emptyEl = document.getElementById("emptyState");
     const searchInput = document.getElementById("searchInput");
+    const studyModal = document.getElementById("studyModal");
+    const studyPanel = document.getElementById("studyPanel");
+    const studyCategory = document.getElementById("studyCategory");
+    const studyChinese = document.getElementById("studyChinese");
+    const studyEnglish = document.getElementById("studyEnglish");
+    const studyPronunciation = document.getElementById("studyPronunciation");
+    const studyCount = document.getElementById("studyCount");
+    const studyClose = document.getElementById("studyClose");
+    const studySpeak = document.getElementById("studySpeak");
+    const studyPrev = document.getElementById("studyPrev");
+    const studyNext = document.getElementById("studyNext");
+    const mobileQuery = window.matchMedia("(max-width: 760px)");
+    let visibleWords = [];
+    let currentStudyIndex = 0;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let englishVoice = null;
 
     function normalize(text) {
       return String(text).trim().toLowerCase();
@@ -746,15 +930,33 @@
         .filter(category => category.words.length > 0);
     }
 
+    function flattenVisibleWords(visibleCategories) {
+      return visibleCategories.flatMap(category =>
+        category.words.map(([chinese, english, pronunciation]) => ({
+          category: category.name,
+          icon: category.icon,
+          color: category.color,
+          chinese,
+          english,
+          pronunciation
+        }))
+      );
+    }
+
     function renderWords() {
       createFilterButtons();
       const visibleCategories = getVisibleCategories();
+      visibleWords = flattenVisibleWords(visibleCategories);
       let total = 0;
+      let cardIndex = 0;
 
       listEl.innerHTML = visibleCategories.map(category => {
         total += category.words.length;
-        const cards = category.words.map(([chinese, english, pronunciation]) => `
-          <article class="card" style="--card-bg: ${category.color}">
+        const cards = category.words.map(([chinese, english, pronunciation]) => {
+          const index = cardIndex;
+          cardIndex += 1;
+          return `
+          <article class="card" style="--card-bg: ${category.color}" data-index="${index}">
             <div class="word-top">
               <p class="chinese">${escapeHtml(chinese)}</p>
               <button class="speak-btn" type="button" data-word="${escapeHtml(english)}" aria-label="朗读 ${escapeHtml(english)}" title="朗读 ${escapeHtml(english)}">🔊</button>
@@ -762,7 +964,8 @@
             <p class="english">${escapeHtml(english)}</p>
             <p class="pronunciation">(${escapeHtml(pronunciation)})</p>
           </article>
-        `).join("");
+        `;
+        }).join("");
 
         return `
           <section class="category-section">
@@ -776,19 +979,66 @@
       countEl.textContent = `共 ${total} 个单词`;
     }
 
+    function loadVoices() {
+      if (!("speechSynthesis" in window)) return;
+      const voices = window.speechSynthesis.getVoices();
+      englishVoice = voices.find(voice => voice.lang === "en-US")
+        || voices.find(voice => voice.lang && voice.lang.toLowerCase().startsWith("en"))
+        || null;
+    }
+
     function speakWord(english) {
       if (!("speechSynthesis" in window)) {
         alert("当前浏览器不支持语音朗读功能。");
         return;
       }
 
-      window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(getSpeakText(english));
       utterance.lang = "en-US";
       utterance.rate = 0.82;
       utterance.pitch = 1.08;
       utterance.volume = 1;
+      if (englishVoice) utterance.voice = englishVoice;
+
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.resume();
       window.speechSynthesis.speak(utterance);
+    }
+
+    function renderStudyCard() {
+      const word = visibleWords[currentStudyIndex];
+      if (!word) return;
+
+      studyPanel.style.background = word.color;
+      studyCategory.textContent = `${word.icon} ${word.category}`;
+      studyChinese.textContent = word.chinese;
+      studyEnglish.textContent = word.english;
+      studyPronunciation.textContent = `(${word.pronunciation})`;
+      studyCount.textContent = `${currentStudyIndex + 1} / ${visibleWords.length}`;
+    }
+
+    function openStudyCard(index) {
+      if (!visibleWords[index]) return;
+      currentStudyIndex = index;
+      renderStudyCard();
+      studyModal.classList.add("open");
+      studyModal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      speakWord(visibleWords[currentStudyIndex].english);
+    }
+
+    function closeStudyCard() {
+      studyModal.classList.remove("open");
+      studyModal.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    }
+
+    function showStudyWord(step) {
+      if (!visibleWords.length) return;
+      currentStudyIndex = (currentStudyIndex + step + visibleWords.length) % visibleWords.length;
+      renderStudyCard();
+      speakWord(visibleWords[currentStudyIndex].english);
     }
 
     filtersEl.addEventListener("click", event => {
@@ -800,14 +1050,60 @@
 
     listEl.addEventListener("click", event => {
       const button = event.target.closest(".speak-btn");
-      if (!button) return;
-      speakWord(button.dataset.word);
+      if (button) {
+        speakWord(button.dataset.word);
+        return;
+      }
+
+      const card = event.target.closest(".card");
+      if (!card || !mobileQuery.matches) return;
+      openStudyCard(Number(card.dataset.index));
     });
+
+    studySpeak.addEventListener("click", () => {
+      const word = visibleWords[currentStudyIndex];
+      if (word) speakWord(word.english);
+    });
+
+    studyPrev.addEventListener("click", () => showStudyWord(-1));
+    studyNext.addEventListener("click", () => showStudyWord(1));
+    studyClose.addEventListener("click", closeStudyCard);
+
+    studyModal.addEventListener("click", event => {
+      if (event.target === studyModal) closeStudyCard();
+    });
+
+    studyPanel.addEventListener("touchstart", event => {
+      const touch = event.changedTouches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+    }, { passive: true });
+
+    studyPanel.addEventListener("touchend", event => {
+      const touch = event.changedTouches[0];
+      const deltaX = touch.clientX - touchStartX;
+      const deltaY = touch.clientY - touchStartY;
+
+      if (Math.abs(deltaX) < 48 || Math.abs(deltaX) < Math.abs(deltaY) * 1.2) return;
+      showStudyWord(deltaX < 0 ? 1 : -1);
+    }, { passive: true });
 
     searchInput.addEventListener("input", event => {
       state.query = event.target.value;
       renderWords();
     });
+
+    document.addEventListener("keydown", event => {
+      if (!studyModal.classList.contains("open")) return;
+      if (event.key === "Escape") closeStudyCard();
+      if (event.key === "ArrowLeft") showStudyWord(-1);
+      if (event.key === "ArrowRight") showStudyWord(1);
+    });
+
+    if ("speechSynthesis" in window) {
+      loadVoices();
+      window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
+    }
 
     document.addEventListener("DOMContentLoaded", renderWords);
   </script>
