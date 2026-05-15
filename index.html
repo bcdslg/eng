@@ -322,7 +322,7 @@
     .study-panel {
       position: relative;
       display: grid;
-      grid-template-rows: auto 1fr auto;
+      grid-template-rows: auto minmax(0, 1fr) auto;
       width: min(520px, 100%);
       min-height: min(720px, calc(100vh - 36px));
       border-radius: 28px;
@@ -366,8 +366,18 @@
       align-content: center;
       justify-items: center;
       gap: 18px;
-      padding: 26px 28px;
+      min-height: 0;
+      padding: 26px 28px 54px;
       text-align: center;
+      will-change: transform, opacity;
+    }
+
+    .study-card.slide-next {
+      animation: slideNext 220ms ease-out;
+    }
+
+    .study-card.slide-prev {
+      animation: slidePrev 220ms ease-out;
     }
 
     .study-chinese {
@@ -411,6 +421,8 @@
     }
 
     .study-nav {
+      position: relative;
+      z-index: 2;
       display: grid;
       grid-template-columns: 56px 1fr 56px;
       align-items: center;
@@ -440,6 +452,28 @@
       text-align: center;
       font-size: 0.95rem;
       font-weight: 700;
+    }
+
+    @keyframes slideNext {
+      from {
+        opacity: 0;
+        transform: translateX(42px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+      }
+    }
+
+    @keyframes slidePrev {
+      from {
+        opacity: 0;
+        transform: translateX(-42px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+      }
     }
 
     @media (hover: none) {
@@ -582,8 +616,23 @@
       }
 
       .study-panel {
-        min-height: calc(100vh - 20px);
+        min-height: calc(100dvh - 20px);
+        max-height: calc(100dvh - 20px);
         border-radius: 24px;
+      }
+
+      .study-card {
+        gap: 16px;
+        padding: 22px 18px 74px;
+      }
+
+      .study-speak {
+        width: 70px;
+        height: 70px;
+      }
+
+      .study-nav {
+        padding-bottom: max(22px, env(safe-area-inset-bottom));
       }
     }
   </style>
@@ -874,6 +923,7 @@
     const searchInput = document.getElementById("searchInput");
     const studyModal = document.getElementById("studyModal");
     const studyPanel = document.getElementById("studyPanel");
+    const studyCard = document.querySelector(".study-card");
     const studyCategory = document.getElementById("studyCategory");
     const studyChinese = document.getElementById("studyChinese");
     const studyEnglish = document.getElementById("studyEnglish");
@@ -1005,16 +1055,22 @@
       window.speechSynthesis.speak(utterance);
     }
 
-    function renderStudyCard() {
+    function renderStudyCard(direction = 0) {
       const word = visibleWords[currentStudyIndex];
       if (!word) return;
 
+      studyCard.classList.remove("slide-next", "slide-prev");
       studyPanel.style.background = word.color;
       studyCategory.textContent = `${word.icon} ${word.category}`;
       studyChinese.textContent = word.chinese;
       studyEnglish.textContent = word.english;
       studyPronunciation.textContent = `(${word.pronunciation})`;
       studyCount.textContent = `${currentStudyIndex + 1} / ${visibleWords.length}`;
+
+      if (direction !== 0) {
+        void studyCard.offsetWidth;
+        studyCard.classList.add(direction > 0 ? "slide-next" : "slide-prev");
+      }
     }
 
     function openStudyCard(index) {
@@ -1037,7 +1093,7 @@
     function showStudyWord(step) {
       if (!visibleWords.length) return;
       currentStudyIndex = (currentStudyIndex + step + visibleWords.length) % visibleWords.length;
-      renderStudyCard();
+      renderStudyCard(step);
       speakWord(visibleWords[currentStudyIndex].english);
     }
 
