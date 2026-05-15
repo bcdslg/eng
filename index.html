@@ -381,13 +381,59 @@
     }
 
     .study-art {
-      display: block;
+      position: relative;
+      display: grid;
+      place-items: center;
       width: min(210px, 48vw);
       aspect-ratio: 1;
       border-radius: 28px;
-      filter: drop-shadow(0 16px 22px rgba(36, 48, 66, 0.16));
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 23% 24%, rgba(255, 179, 207, 0.84) 0 10%, transparent 11%),
+        radial-gradient(circle at 78% 24%, rgba(143, 220, 141, 0.72) 0 13%, transparent 14%),
+        radial-gradient(circle at 78% 76%, rgba(120, 183, 255, 0.7) 0 10%, transparent 11%),
+        linear-gradient(135deg, #ffffff 0%, #fff4bd 54%, #cdeeff 100%);
+      box-shadow: 0 16px 22px rgba(36, 48, 66, 0.16);
       user-select: none;
-      -webkit-user-drag: none;
+    }
+
+    .study-art::after {
+      content: "";
+      position: absolute;
+      left: 18%;
+      right: 18%;
+      bottom: 20%;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(36, 48, 66, 0.08);
+    }
+
+    .study-art-emoji {
+      position: relative;
+      z-index: 1;
+      font-size: clamp(4.5rem, 21vw, 7rem);
+      line-height: 1;
+      filter: drop-shadow(0 8px 8px rgba(36, 48, 66, 0.16));
+    }
+
+    .study-art-label {
+      position: absolute;
+      left: 16%;
+      right: 16%;
+      bottom: 11%;
+      z-index: 2;
+      min-height: 28px;
+      border-radius: 999px;
+      padding: 5px 8px;
+      background: rgba(255, 255, 255, 0.86);
+      color: var(--ink);
+      font-size: 0.92rem;
+      font-weight: 900;
+      line-height: 1.2;
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .study-chinese {
@@ -415,17 +461,29 @@
       overflow-wrap: anywhere;
     }
 
-    .study-speak {
-      display: inline-grid;
-      place-items: center;
-      width: 78px;
-      height: 78px;
-      border: 0;
-      border-radius: 50%;
+    .study-actions {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
       margin-top: 8px;
+    }
+
+    .study-speak {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-width: 104px;
+      min-height: 56px;
+      border: 0;
+      border-radius: 999px;
+      padding: 0 16px;
       background: white;
       box-shadow: var(--shadow-soft);
-      font-size: 2rem;
+      color: var(--ink);
+      font-size: 1rem;
+      font-weight: 900;
       cursor: pointer;
       touch-action: manipulation;
     }
@@ -642,8 +700,8 @@
       }
 
       .study-speak {
-        width: 70px;
-        height: 70px;
+        min-width: 96px;
+        min-height: 52px;
       }
 
       .study-nav {
@@ -680,11 +738,17 @@
         <button class="study-close" id="studyClose" type="button" aria-label="关闭">×</button>
       </div>
       <div class="study-card">
-        <img class="study-art" id="studyArt" alt="" aria-hidden="true">
+        <div class="study-art" id="studyArt" aria-hidden="true">
+          <span class="study-art-emoji" id="studyArtEmoji">⭐</span>
+          <span class="study-art-label" id="studyArtLabel"></span>
+        </div>
         <p class="study-chinese" id="studyChinese"></p>
         <p class="study-english" id="studyEnglish"></p>
         <p class="study-pronunciation" id="studyPronunciation"></p>
-        <button class="study-speak" id="studySpeak" type="button" aria-label="朗读当前单词">🔊</button>
+        <div class="study-actions">
+          <button class="study-speak" id="studySpeak" type="button" aria-label="朗读当前英文单词">🔊 英文</button>
+          <button class="study-speak" id="studySpeakChinese" type="button" aria-label="朗读当前中文单词">🔊 中文</button>
+        </div>
       </div>
       <div class="study-nav">
         <button class="study-arrow" id="studyPrev" type="button" aria-label="上一个单词">‹</button>
@@ -941,6 +1005,8 @@
     const studyPanel = document.getElementById("studyPanel");
     const studyCard = document.querySelector(".study-card");
     const studyArt = document.getElementById("studyArt");
+    const studyArtEmoji = document.getElementById("studyArtEmoji");
+    const studyArtLabel = document.getElementById("studyArtLabel");
     const studyCategory = document.getElementById("studyCategory");
     const studyChinese = document.getElementById("studyChinese");
     const studyEnglish = document.getElementById("studyEnglish");
@@ -948,6 +1014,7 @@
     const studyCount = document.getElementById("studyCount");
     const studyClose = document.getElementById("studyClose");
     const studySpeak = document.getElementById("studySpeak");
+    const studySpeakChinese = document.getElementById("studySpeakChinese");
     const studyPrev = document.getElementById("studyPrev");
     const studyNext = document.getElementById("studyNext");
     const mobileQuery = window.matchMedia("(max-width: 760px)");
@@ -956,6 +1023,7 @@
     let touchStartX = 0;
     let touchStartY = 0;
     let englishVoice = null;
+    let chineseVoice = null;
 
     const categoryEmoji = {
       "水果蔬菜": "🥕",
@@ -1017,13 +1085,6 @@
         .replace(/'/g, "&#039;");
     }
 
-    function escapeSvg(text) {
-      return String(text)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-    }
-
     function getSpeakText(english) {
       return english.replace(/\s*\/.*$/, "").trim();
     }
@@ -1031,35 +1092,6 @@
     function getWordEmoji(word) {
       const primaryEnglish = getSpeakText(word.english).toLowerCase();
       return wordEmoji[primaryEnglish] || categoryEmoji[word.category] || "⭐";
-    }
-
-    function createCartoonImage(word) {
-      const emoji = escapeSvg(getWordEmoji(word));
-      const label = escapeSvg(getSpeakText(word.english));
-      const svg = `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220">
-          <defs>
-            <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
-              <stop offset="0%" stop-color="#ffffff"/>
-              <stop offset="52%" stop-color="#fff4bd"/>
-              <stop offset="100%" stop-color="#cdeeff"/>
-            </linearGradient>
-            <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#31425f" flood-opacity="0.18"/>
-            </filter>
-          </defs>
-          <rect width="220" height="220" rx="46" fill="url(#bg)"/>
-          <circle cx="42" cy="48" r="18" fill="#ffb3cf" opacity="0.78"/>
-          <circle cx="180" cy="54" r="24" fill="#8fdc8d" opacity="0.68"/>
-          <circle cx="178" cy="166" r="18" fill="#78b7ff" opacity="0.62"/>
-          <path d="M39 158c24 23 60 30 95 13 23-11 41-5 52 11" fill="none" stroke="#243042" stroke-width="8" stroke-linecap="round" opacity="0.1"/>
-          <text x="110" y="125" text-anchor="middle" dominant-baseline="middle" font-size="86" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif" filter="url(#soft)">${emoji}</text>
-          <rect x="42" y="166" width="136" height="31" rx="15.5" fill="#ffffff" opacity="0.82"/>
-          <text x="110" y="187" text-anchor="middle" font-size="15" font-weight="800" fill="#243042" font-family="Arial, sans-serif">${label}</text>
-        </svg>
-      `;
-
-      return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
     }
 
     function createFilterButtons() {
@@ -1140,24 +1172,35 @@
       englishVoice = voices.find(voice => voice.lang === "en-US")
         || voices.find(voice => voice.lang && voice.lang.toLowerCase().startsWith("en"))
         || null;
+      chineseVoice = voices.find(voice => voice.lang === "zh-CN")
+        || voices.find(voice => voice.lang && voice.lang.toLowerCase().startsWith("zh"))
+        || null;
     }
 
-    function speakWord(english) {
+    function speakText(text, lang, voice, rate = 0.82, pitch = 1.08) {
       if (!("speechSynthesis" in window)) {
         alert("当前浏览器不支持语音朗读功能。");
         return;
       }
 
-      const utterance = new SpeechSynthesisUtterance(getSpeakText(english));
-      utterance.lang = "en-US";
-      utterance.rate = 0.82;
-      utterance.pitch = 1.08;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang;
+      utterance.rate = rate;
+      utterance.pitch = pitch;
       utterance.volume = 1;
-      if (englishVoice) utterance.voice = englishVoice;
+      if (voice) utterance.voice = voice;
 
       window.speechSynthesis.cancel();
       window.speechSynthesis.resume();
       window.speechSynthesis.speak(utterance);
+    }
+
+    function speakWord(english) {
+      speakText(getSpeakText(english), "en-US", englishVoice, 0.82, 1.08);
+    }
+
+    function speakChinese(chinese) {
+      speakText(chinese, "zh-CN", chineseVoice, 0.9, 1.04);
     }
 
     function renderStudyCard(direction = 0) {
@@ -1166,8 +1209,8 @@
 
       studyCard.classList.remove("slide-next", "slide-prev");
       studyPanel.style.background = word.color;
-      studyArt.src = createCartoonImage(word);
-      studyArt.alt = `${word.chinese} 的卡通图`;
+      studyArtEmoji.textContent = getWordEmoji(word);
+      studyArtLabel.textContent = getSpeakText(word.english);
       studyCategory.textContent = `${word.icon} ${word.category}`;
       studyChinese.textContent = word.chinese;
       studyEnglish.textContent = word.english;
@@ -1226,6 +1269,11 @@
     studySpeak.addEventListener("click", () => {
       const word = visibleWords[currentStudyIndex];
       if (word) speakWord(word.english);
+    });
+
+    studySpeakChinese.addEventListener("click", () => {
+      const word = visibleWords[currentStudyIndex];
+      if (word) speakChinese(word.chinese);
     });
 
     studyPrev.addEventListener("click", () => showStudyWord(-1));
